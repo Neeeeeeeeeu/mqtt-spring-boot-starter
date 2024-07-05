@@ -98,10 +98,4 @@
         </dependencies>
     </dependencyManagement>
 
-    <distributionManagement>
-        <repository>
-            <id>local-maven</id>
-            <url>file:${project.basedir}/release</url>
-        </repository>
-    </distributionManagement>
 </project>

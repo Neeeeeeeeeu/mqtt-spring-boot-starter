@@ -1,11 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>com.github.neeeeeeeeeu</groupId>
-        <artifactId>mqtt-spring-parent</artifactId>
-        <version>1.0.0</version>
-    </parent>
 
     <groupId>com.github.neeeeeeeeeu</groupId>
     <artifactId>mqtt-spring-boot-starter</artifactId>
@@ -14,26 +9,49 @@
 
     <name>mqtt-spring-boot-starter</name>
 
+    <properties>
+        <project.artifactId>mqtt-spring-boot-starter</project.artifactId>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <java.version>17</java.version>
+        <spring-boot.version>3.3.1</spring-boot.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <jackson.version>2.17.0</jackson.version>
+        <paho.mqttv3>1.2.2</paho.mqttv3>
+        <junit4.version>4.13.2</junit4.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+            <version>${spring-boot.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
+            <version>${spring-boot.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.eclipse.paho</groupId>
             <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+            <version>${paho.mqttv3}</version>
         </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
-
     </dependencies>
+
+    <distributionManagement>
+        <repository>
+            <id>local-maven</id>
+            <url>file:${project.basedir}/release</url>
+        </repository>
+    </distributionManagement>
 </project>
