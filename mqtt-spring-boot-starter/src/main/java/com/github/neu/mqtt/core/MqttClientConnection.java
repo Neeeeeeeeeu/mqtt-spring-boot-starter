@@ -100,8 +100,6 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
     private void doReSubscribe() {
         topics.values().stream()
                 .forEach(topic -> {
-                    // TODO: 2024/7/1  订阅主题
-                    //subscribe(mqttHandler.getTopicFilter(), mqttHandler.getQos(), mqttHandler.getHandlerClass());
                     try {
                         client.subscribe(topic.topic, topic.qos, topic.messageListener);
                     } catch (MqttException e) {
@@ -121,6 +119,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
         try {
             Thread.sleep(RECONNECT_TIME);
         } catch (InterruptedException ignore) {
+
         }
     }
 
@@ -152,39 +151,49 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
     public String nodeInfo() {
         String broker = clientConfig.getBroker();
         String username = clientConfig.getUsername();
-        return " <" + clientId + "> " + " uers:" + username + " broker:" + broker;
+        return " <" + clientId + "> " + " user:" + username + " broker:" + broker;
     }
 
     private void doSubscribe(String topic, int qos, IMqttMessageListener messageListener) {
         try {
             client.subscribe(topic, qos, messageListener);
+            logger.info("client:{} topic:{} 订阅成功", client.getClientId(), topic);
         } catch (MqttException e) {
-            logger.error(clientId + "主题:{}订阅失败", topic, e);
+            logger.error("client:{} topic:{} 订阅失败", client.getClientId(), topic, e);
         }
-        logger.info(clientId + " 主题:{}订阅成功", topic);
     }
 
-    private <T> void doPublish(String topic, byte[] data, int qos, boolean retained) {
+    private <T> void doPublish(String topic, byte[] data, int qos, boolean retained) throws MqttException {
         try {
             client.publish(topic, data, qos, retained);
-        } catch (MqttException e) {
-            logger.error(clientId + "主题:{}发布失败", topic, e);
+            if (logger.isDebugEnabled()) {
+                String dataStr = new String(data, StandardCharsets.UTF_8);
+                logger.debug("client:{} topic:{} content:{}", clientId, topic, dataStr);
+            }
+        } catch (Exception e) {
+            logger.error("client:{} topic:{} publish fail", clientId, topic, e);
+            throw new MqttException(e);
         }
     }
 
-    private void doPublish(String topic, MqttMessage message) {
+    private void doPublish(String topic, MqttMessage message) throws MqttException {
         try {
             client.publish(topic, message);
-        } catch (MqttException e) {
-            logger.error(clientId + "主题:{}发布失败", topic, e);
+            if (logger.isDebugEnabled()) {
+                String dataStr = new String(message.getPayload(), StandardCharsets.UTF_8);
+                logger.debug("client:{} topic:{} content:{}", clientId, topic, dataStr);
+            }
+        } catch (Exception e) {
+            logger.error("client:{} topic:{} publish fail", client, topic, e);
+            throw new MqttException(e);
         }
     }
 
 
     @Override
     public void subscribe(String topic, int qos, IMqttMessageListener messageListener) {
-        if (topics.containsKey(topic)){
-            logger.info("mqtt {}已经订阅{}", clientId, topic);
+        if (topics.containsKey(topic)) {
+            logger.warn("MQTT节点 {} 已经订阅{}", clientId, topic);
             return;
         }
         doSubscribe(topic, qos, messageListener);
@@ -193,12 +202,20 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
 
     @Override
     public <T> void publish(String topic, T data, int qos, boolean retained) {
-        doPublish(topic, messageDecoderEncoder.convertEncoder(data), qos, retained);
+        try {
+            doPublish(topic, messageDecoderEncoder.convertEncoder(data), qos, retained);
+        } catch (MqttException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void publish(String topic, MqttMessage message) {
-        doPublish(topic, message);
+        try {
+            doPublish(topic, message);
+        } catch (MqttException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     record Topic(String topic, int qos, IMqttMessageListener messageListener) {
