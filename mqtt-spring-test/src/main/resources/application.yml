@@ -11,3 +11,7 @@ mqtt:
       username: mq01
       password: 123456
       maxInflight: 1000
+      clientId: mqtt-spring-test-node1
+#logging:
+#  level:
+    #com.github.neu.*: debug

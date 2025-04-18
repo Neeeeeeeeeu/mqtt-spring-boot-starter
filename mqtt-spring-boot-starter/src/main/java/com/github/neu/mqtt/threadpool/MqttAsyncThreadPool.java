@@ -45,7 +45,7 @@ public class MqttAsyncThreadPool {
 
     public void showPoolHealth() {
         if (listenerPool != null) {
-            logger.info("===线程池状态===");
+            logger.info("===MQTT线程池状态===");
             logger.info("提交线程_活跃线程:{},队列大小:{}", listenerPool.getActiveCount(), listenerPool.getThreadPoolExecutor().getQueue().size());
         }
     }

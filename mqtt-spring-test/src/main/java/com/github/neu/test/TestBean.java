@@ -4,11 +4,17 @@ package com.github.neu.test;
 import com.github.neu.mqtt.core.MqttTemplate;
 import com.github.neu.mqtt.core.annotation.MqttClient;
 import com.github.neu.mqtt.core.annotation.MqttListener;
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author: neeeeeeeeeu
@@ -18,6 +24,7 @@ import org.springframework.stereotype.Component;
  * @version:
  */
 @Component
+@Slf4j
 public class TestBean {
 
     @MqttClient("node1")
@@ -26,42 +33,102 @@ public class TestBean {
     @MqttClient("client1")
     private MqttTemplate bsMqttTemplate02;
 
-    @MqttListener(clientId = "node1", topic = "test/topic001")
-    public void topicTest1(String data) {
-        System.out.println("topicTest1: " + data);
-        bsMqttTemplate01.publish("test/receive", data, 0, false);
-        bsMqttTemplate02.publish("test/receive", data, 0, false);
+    private AtomicLong count1 = new AtomicLong();
+    private AtomicLong count2 = new AtomicLong();
+
+
+    private AtomicLong send1 = new AtomicLong();
+    private AtomicLong send2 = new AtomicLong();
+
+//    @MqttListener(clientId = "node1", topic = "node1/topic001")
+//    public void topicTest1(String data) {
+//        bsMqttTemplate01.publish("node1/topic002", "node1publish1", 0, false);
+//        bsMqttTemplate01.publish("123",new MqttMessage("node1".getBytes()));
+//        if (!"node1publish1".equals(data)) {
+//            log.info("node1/topic001 error: " + data);
+//        }
+//        log.info("node1/topic001: rec count:" + count1.getAndIncrement());
+//    }
+
+//    @MqttListener(clientId = "client1", topic = "client1/topic001")
+//    public void topicTest2(String data) {
+//        if (!"client1publish1".equals(data)) {
+//            log.info("client1/topic001 error: " + data);
+//        }
+//        log.info("client1/topic001: rec count:" + count2.getAndIncrement());
+//    }
+
+    @MqttListener(clientId = "node1", topic = "node1/topic001")
+    public void topicTestCount1(String data) {
+        log.info("node1/topic001: " + data);
     }
 
-    @MqttListener(clientId = "client1", topic = "test/topic002")
-    public void topicTest2(MqttMessage data) {
-        System.out.println("topicTest2: " + data);
+    @MqttListener(clientId = "client1", topic = "client1/topic002")
+    public void topicTestCount2(String data) {
+        log.info("client2/topic002: " + data);
     }
 
-    @MqttListener(clientId = "node1", topic = "test/topic003")
-    public void topicTest3(TestEntry data) {
-        System.out.println("topicTest3: " + data.getText());
-    }
-
-    @MqttListener(clientId = "client1", topic = "test/topic003")
+    @MqttListener(clientId = "client1", topic = "client1/topic003")
     public void topicTest4(TestEntry data) {
-        System.out.println("topicTest4: " + data.getText());
+        log.info("client1/topic002: " + data.getText());
     }
 
-    @MqttListener(clientId = "client_fail", topic = "test/topic003")
-    public void topicTestfail(TestEntry data) {
-        System.out.println("topicTestfail: " + data.getText());
+    @PostConstruct
+    public void send() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                for (int i = 0; i < 100000; i++) {
+                    try {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                        bsMqttTemplate01.publish("node1/topic001", "node1publish1", 0, false);
+                    } catch (MqttException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }).start();
+//        log.info("node1/topic001: send count:" + send1.getAndIncrement());
+//        bsMqttTemplate02.publish("client1/topic001", "client1publish1", 0, false);
+//        log.info("client1/topic001: send count:" + send2.getAndIncrement());
     }
 
-    @MqttListener(clientId = "node1", topic = "test/topic003")
-    public void topicTestfail2(TestEntry data) {
-        System.out.println("topicTestfail2: " + data.getText());
-    }
+    private void test1() {
+        for (int i = 1; i <= 100000; i++) {
+            try {
+                bsMqttTemplate01.publish("node1/topic001", "node1publish1", 0, false);
+            } catch (MqttException e) {
+                throw new RuntimeException(e);
+            }
+//            bsMqttTemplate01.publish("node1/topic001","node1", 0, false);
+            try {
+                bsMqttTemplate02.publish("client1/topic001", "client1publish1", 0, false);
+            } catch (MqttException e) {
+                throw new RuntimeException(e);
+            }
+//            bsMqttTemplate02.publish("client1/topic001","client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1", 0, false);
 
-    @MqttListener(clientId = "node1", topic = "test/start")
-    public void send(String str) {
-        for (int i = 0; i < 999; i++) {
-            bsMqttTemplate01.publish("test/topic001", "test", 0, false);
+            if (i % 100 == 0) {
+                try {
+                    bsMqttTemplate01.publish("node1/topic002", i + "", 0, false);
+                } catch (MqttException e) {
+                    throw new RuntimeException(e);
+                }
+                try {
+                    bsMqttTemplate02.publish("client1/topic002", i + "", 0, false);
+                } catch (MqttException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 }

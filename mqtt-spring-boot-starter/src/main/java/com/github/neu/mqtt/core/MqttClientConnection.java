@@ -2,13 +2,13 @@ package com.github.neu.mqtt.config;
 
 import com.github.neu.mqtt.core.MessageDecoderEncoder;
 import com.github.neu.mqtt.core.MqttTemplate;
-import com.github.neu.mqtt.core.DefaultMessageDecoderEncoder;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,6 +31,8 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
 
     private MqttClient client;
 
+    private String clientName;
+
     private String clientId;
 
     private MqttProperties.ClientConfig clientConfig;
@@ -40,9 +42,10 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
     private Map<String, MqttClientConnection.Topic> topics = new HashMap<>();
 
 
-    public MqttClientConnection(String clientId, MqttProperties.ClientConfig clientConfig) {
-        this.clientId = clientId;
+    public MqttClientConnection(String clinetName, MqttProperties.ClientConfig clientConfig) {
+        this.clientName = clinetName;
         this.clientConfig = clientConfig;
+        this.clientId = getClientId(clientName, clientConfig.getClientId());
     }
 
     public void setMessageDecoderEncoder(MessageDecoderEncoder messageDecoderEncoder) {
@@ -139,8 +142,8 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
         }
     }
 
-    public String getClientId() {
-        return this.clientId;
+    public String getClientName() {
+        return this.clientName;
     }
 
     @Override
@@ -151,27 +154,27 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
     public String nodeInfo() {
         String broker = clientConfig.getBroker();
         String username = clientConfig.getUsername();
-        return " <" + clientId + "> " + " user:" + username + " broker:" + broker;
+        return " <" + clientName + "> " + "clinetId：" + clientId + " user:" + username + " broker:" + broker;
     }
 
     private void doSubscribe(String topic, int qos, IMqttMessageListener messageListener) {
         try {
             client.subscribe(topic, qos, messageListener);
-            logger.info("client:{} topic:{} 订阅成功", client.getClientId(), topic);
+            logger.info("client:{} topic:{} subscribe success", client.getClientId(), topic);
         } catch (MqttException e) {
-            logger.error("client:{} topic:{} 订阅失败", client.getClientId(), topic, e);
+            logger.error("client:{} topic:{} subscribe fail", client.getClientId(), topic, e);
         }
     }
 
-    private <T> void doPublish(String topic, byte[] data, int qos, boolean retained) throws MqttException {
+    private void doPublish(String topic, byte[] data, int qos, boolean retained) throws MqttException {
         try {
             client.publish(topic, data, qos, retained);
             if (logger.isDebugEnabled()) {
                 String dataStr = new String(data, StandardCharsets.UTF_8);
-                logger.debug("client:{} topic:{} content:{}", clientId, topic, dataStr);
+                logger.debug("client:{} topic:{} content:{}", clientName, topic, dataStr);
             }
         } catch (Exception e) {
-            logger.error("client:{} topic:{} publish fail", clientId, topic, e);
+            logger.error("client:{} topic:{} publish fail", clientName, topic, e);
             throw new MqttException(e);
         }
     }
@@ -181,7 +184,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
             client.publish(topic, message);
             if (logger.isDebugEnabled()) {
                 String dataStr = new String(message.getPayload(), StandardCharsets.UTF_8);
-                logger.debug("client:{} topic:{} content:{}", clientId, topic, dataStr);
+                logger.debug("client:{} topic:{} content:{}", clientName, topic, dataStr);
             }
         } catch (Exception e) {
             logger.error("client:{} topic:{} publish fail", client, topic, e);
@@ -193,7 +196,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
     @Override
     public void subscribe(String topic, int qos, IMqttMessageListener messageListener) {
         if (topics.containsKey(topic)) {
-            logger.warn("MQTT节点 {} 已经订阅{}", clientId, topic);
+            logger.warn("MQTT clinet:{} duplicate subscribed{}", clientName, topic);
             return;
         }
         doSubscribe(topic, qos, messageListener);
@@ -215,6 +218,23 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
             doPublish(topic, message);
         } catch (MqttException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private String getClientId(String clientName, String clientId) {
+        if (clientId == null || clientId.length() == 0) {
+            int length = 16; // 指定生成的16进制字符串长度
+            SecureRandom secureRandom = new SecureRandom();
+            byte[] randomBytes = new byte[length / 2]; // 每个字节对应两个16进制字符
+            secureRandom.nextBytes(randomBytes);
+
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : randomBytes) {
+                hexString.append(String.format("%02x", b)); // 将字节转换为两位16进制
+            }
+            return clientName + "_" + hexString.toString();
+        } else {
+            return clientId;
         }
     }
 

@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * @version:
  */
 public class MqttClinetFactory implements FactoryBean<MqttClientContainer>, EnvironmentAware, ApplicationContextAware {
-    
+
     private final Logger logger = LoggerFactory.getLogger(MqttClinetFactory.class);
 
     private ApplicationContext applicationContext;
@@ -80,11 +80,11 @@ public class MqttClinetFactory implements FactoryBean<MqttClientContainer>, Envi
         return messageDecoderEncoder;
     }
 
-    private MqttClientConnection createConnection(String clientId, MqttProperties.ClientConfig cfg, MessageDecoderEncoder messageDecoderEncoder) {
+    private MqttClientConnection createConnection(String clientName, MqttProperties.ClientConfig cfg, MessageDecoderEncoder messageDecoderEncoder) {
         if (this.applicationContext instanceof ConfigurableApplicationContext caf) {
-            MqttClientConnection mqttClientConnection = new MqttClientConnection(clientId, cfg);
+            MqttClientConnection mqttClientConnection = new MqttClientConnection(clientName, cfg);
             mqttClientConnection.setMessageDecoderEncoder(messageDecoderEncoder);
-            caf.getBeanFactory().registerSingleton(clientId, mqttClientConnection);
+            caf.getBeanFactory().registerSingleton(clientName, mqttClientConnection);
             return mqttClientConnection;
         }
         return null;

@@ -4,7 +4,7 @@
 
     <groupId>com.github.neeeeeeeeeu</groupId>
     <artifactId>mqtt-spring-boot-starter</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.3</version>
     <packaging>jar</packaging>
 
     <name>mqtt-spring-boot-starter</name>
@@ -48,10 +48,22 @@
         </dependency>
     </dependencies>
 
+<!--    <distributionManagement>-->
+<!--        <repository>-->
+<!--            <id>local-maven</id>-->
+<!--            <url>file:${project.basedir}/release</url>-->
+<!--        </repository>-->
+<!--    </distributionManagement>-->
+
     <distributionManagement>
-        <repository>
-            <id>local-maven</id>
-            <url>file:${project.basedir}/release</url>
+        <repository><!--id的名字可以任意取，但是在setting文件中的属性<server>的ID与这里一致-->
+            <id>maven-releases</id><!--指向仓库类型为host(宿主仓库）的储存类型为Release的仓库-->
+            <url>http://192.168.2.201:8081/repository/maven-releases/</url>
         </repository>
+        <snapshotRepository>
+            <id>maven-snapshots</id>
+            <url>http://192.168.2.201:8081/repository/maven-snapshots/</url>
+        </snapshotRepository>
     </distributionManagement>
+
 </project>

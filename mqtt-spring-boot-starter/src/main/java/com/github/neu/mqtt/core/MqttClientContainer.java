@@ -32,10 +32,10 @@ public class MqttClientContainer {
     }
 
     public void addClinet(MqttClientConnection r) {
-        MqttClientConnection mQttClientR = mqttClientRs.get(r.getClientId());
+        MqttClientConnection mQttClientR = mqttClientRs.get(r.getClientName());
         if (mQttClientR != null) {
             throw new IllegalArgumentException("MQTT客户端已存在:" + r.toString());
         }
-        mqttClientRs.put(r.getClientId(), r);
+        mqttClientRs.put(r.getClientName(), r);
     }
 }

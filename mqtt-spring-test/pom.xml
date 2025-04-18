@@ -31,7 +31,13 @@
         <dependency>
             <groupId>com.github.neeeeeeeeeu</groupId>
             <artifactId>mqtt-spring-boot-starter</artifactId>
-            <version>0.1.0</version>
+            <version>0.1.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.26</version>
         </dependency>
 
     </dependencies>
