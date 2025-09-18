@@ -25,7 +25,8 @@ public class MqttProperties {
     public static class ClientConfig {
         // MQTT服务器 ip:port
         private String broker;
-        // 客户端id MQTT中不可重复
+        // 客户端id MQTT中不可重复 未指定则根据mqtt当前的配置名字+随机字符串
+        // 如果主动配置则直接应用，启动相同实例会出现冲突。
         private String clientId;
         //用户名
         private String username;

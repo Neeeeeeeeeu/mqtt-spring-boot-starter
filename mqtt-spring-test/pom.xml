@@ -16,7 +16,6 @@
         <spring-boot.version>3.3.1</spring-boot.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <jackson.version>2.17.0</jackson.version>
         <paho.mqttv3>1.2.2</paho.mqttv3>
         <junit4.version>4.13.2</junit4.version>
     </properties>
@@ -32,6 +31,24 @@
             <groupId>com.github.neeeeeeeeeu</groupId>
             <artifactId>mqtt-spring-boot-starter</artifactId>
             <version>0.1.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.17.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.17.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.17.0</version>
         </dependency>
 
         <dependency>

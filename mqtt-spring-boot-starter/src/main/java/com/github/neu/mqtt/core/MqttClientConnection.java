@@ -60,7 +60,12 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
             throw new RuntimeException(e);
         }
     }
+//C/C++ 库 jni 接口 *char[] readFile();
+//private native char[] readFile = "mqtt-jni";
 
+// roback - context map<String,T> 包含任务的全部信息。
+// runable(context ctx);
+//
     private void initMqttClient() throws MqttException {
         client = new MqttClient(
                 clientConfig.getBroker()

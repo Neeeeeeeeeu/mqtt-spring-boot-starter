@@ -63,9 +63,10 @@ public class TestBean {
         log.info("node1/topic001: " + data);
     }
 
-    @MqttListener(clientId = "client1", topic = "client1/topic002")
-    public void topicTestCount2(String data) {
-        log.info("client2/topic002: " + data);
+    @MqttListener(clientId = "client1", topic = "bs_cloud_v2/elec_meter/761076982079/data")
+    public void topicTestCount2(MeterDataCacheDTO data) {
+        log.info(data.toString());
+
     }
 
     @MqttListener(clientId = "client1", topic = "client1/topic003")
