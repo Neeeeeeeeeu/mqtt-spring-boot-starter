@@ -20,11 +20,6 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
 
     private final Logger logger = LoggerFactory.getLogger(MqttClientConnection.class);
 
-    /**
-     * MQTT 重连失败尝试间隔
-     */
-    private static final int RECONNECT_TIME = 10000;
-
     private MemoryPersistence persistence = new MemoryPersistence();
 
     private MqttConnectOptions connOpts = null;
@@ -71,15 +66,15 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
                 clientConfig.getBroker()
                 , clientId
                 , persistence);
-        client.setTimeToWait(1000);
+        client.setTimeToWait(clientConfig.getTimeToWait() * 1000L);
         // MQTT 连接选项
-        if (clientConfig.getUsername() != null) {
-            connOpts = new MqttConnectOptions();
-            //没配置并发量的默认大小10
-            connOpts.setMaxInflight(clientConfig.getMaxInflight() <= 0 ? 10 : clientConfig.getMaxInflight());
-            connOpts.setUserName(clientConfig.getUsername());
-            connOpts.setPassword(clientConfig.getPassword().toCharArray());
-        }
+        connOpts = new MqttConnectOptions();
+        //没配置并发量的默认大小10
+        connOpts.setMaxInflight(clientConfig.getMaxInflight() <= 0 ? 10 : clientConfig.getMaxInflight());
+        connOpts.setUserName(clientConfig.getUsername());
+        connOpts.setPassword(clientConfig.getPassword().toCharArray());
+        // 链接超时默认30秒
+        connOpts.setConnectionTimeout(clientConfig.getConnectTimeout());
         connOpts.setCleanSession(true);
         connect();
     }
@@ -93,10 +88,10 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
                 } else {
                     client.connect(connOpts);
                 }
-                logger.info("MQTT服务器连接成功{}", nodeInfo());
+                logger.info("MQTT服务器连接成功{}", nodeInfo() +" Config:"+clientConfig.toString());
                 break;
             } catch (MqttException e) {
-                logger.error("MQTT连接失败:{} 尝试重新连接", nodeInfo(), e);
+                logger.error("MQTT连接失败:{} 尝试重新连接", nodeInfo() +" Config:"+clientConfig.toString(), e);
                 sleep();
             }
         }
@@ -125,7 +120,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
 
     private void sleep() {
         try {
-            Thread.sleep(RECONNECT_TIME);
+            Thread.sleep(clientConfig.getReConnectDelay() * 1000L);
         } catch (InterruptedException ignore) {
 
         }

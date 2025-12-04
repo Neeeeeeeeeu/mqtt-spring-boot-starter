@@ -4,7 +4,7 @@
 
     <groupId>com.github.neeeeeeeeeu</groupId>
     <artifactId>mqtt-spring-boot-starter</artifactId>
-    <version>0.1.3</version>
+    <version>0.1.4</version>
     <packaging>jar</packaging>
 
     <name>mqtt-spring-boot-starter</name>

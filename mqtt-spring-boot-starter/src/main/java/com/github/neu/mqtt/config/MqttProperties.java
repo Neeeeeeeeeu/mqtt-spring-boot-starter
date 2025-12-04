@@ -27,13 +27,19 @@ public class MqttProperties {
         private String broker;
         // 客户端id MQTT中不可重复 未指定则根据mqtt当前的配置名字+随机字符串
         // 如果主动配置则直接应用，启动相同实例会出现冲突。
-        private String clientId;
+        private String clientId = "你没配置MQTT客户端ID哦_" + System.currentTimeMillis();
         //用户名
         private String username;
         //密码
         private String password;
         //可同时发送的数据量 MQTT 并发数量 超了就会抛出异常 看着配 默认配置10
-        private int maxInflight;
+        private int maxInflight = 1000;
+        //MQTT连接超时时间 默认30秒
+        private int connectTimeout = 30;
+        //同步操作等待异步完成的最大时间  默认3秒
+        private int timeToWait = 3;
+        //重连间隔时间 默认0秒
+        private int reConnectDelay = 10;
 
         public ClientConfig() {
         }
@@ -77,6 +83,44 @@ public class MqttProperties {
         public void setMaxInflight(int maxInflight) {
             this.maxInflight = maxInflight;
         }
+
+        public int getConnectTimeout() {
+            return connectTimeout;
+        }
+
+        public void setConnectTimeout(int connectTimeout) {
+            this.connectTimeout = connectTimeout;
+        }
+
+        public int getTimeToWait() {
+            return timeToWait;
+        }
+
+        public void setTimeToWait(int timeToWait) {
+            this.timeToWait = timeToWait;
+        }
+
+        public int getReConnectDelay() {
+            return reConnectDelay;
+        }
+
+        public void setReConnectDelay(int reConnectDelay) {
+            this.reConnectDelay = reConnectDelay;
+        }
+
+        @Override
+        public String toString() {
+            return "ClientConfig{" +
+                    "broker='" + broker + '\'' +
+                    ", clientId='" + clientId + '\'' +
+                    ", username='" + username + '\'' +
+                    ", password='" + password + '\'' +
+                    ", maxInflight=" + maxInflight +
+                    ", connectTimeout=" + connectTimeout +
+                    ", timeToWait=" + timeToWait +
+                    ", reConnectDelay=" + reConnectDelay +
+                    '}';
+        }
     }
 
     public Map<String, ClientConfig> getClients() {
@@ -86,4 +130,6 @@ public class MqttProperties {
     public void setClients(Map<String, ClientConfig> clients) {
         this.clients = clients;
     }
+
 }
+
