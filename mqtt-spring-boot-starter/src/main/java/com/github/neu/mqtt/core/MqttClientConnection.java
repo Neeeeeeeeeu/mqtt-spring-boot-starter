@@ -65,7 +65,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
 //C/C++ 库 jni 接口 *char[] readFile();
 //private native char[] readFile = "mqtt-jni";
 
-// roback - context map<String,T> 包含任务的全部信息。
+    // roback - context map<String,T> 包含任务的全部信息。
 // runable(context ctx);
 //
     private void initMqttClient() throws MqttException {
@@ -109,11 +109,11 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
                     } else {
                         client.connect(connOpts);
                     }
-                    logger.info("MQTT服务器连接成功{}", nodeInfo() +" Config:"+clientConfig.toString());
+                    logger.info("MQTT服务器连接成功{}", nodeInfo() + " Config:" + clientConfig.toString());
                     isConnected.set(true);
                     break;
                 } catch (MqttException e) {
-                    logger.error("MQTT连接失败:{} 尝试重新连接", nodeInfo() +" Config:"+clientConfig.toString(), e);
+                    logger.error("MQTT连接失败:{} 尝试重新连接", nodeInfo() + " Config:" + clientConfig.toString(), e);
                     sleep();
                 }
             }
@@ -131,6 +131,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
                 .forEach(topic -> {
                     try {
                         client.subscribe(topic.topic, topic.qos, topic.messageListener);
+                        logger.info("client:{} topic:{} reSubscribe success", client.getClientId(), topic.topic);
                     } catch (MqttException e) {
                         throw new RuntimeException(e);
                     }
@@ -182,7 +183,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
     public String nodeInfo() {
         String broker = clientConfig.getBroker();
         String username = clientConfig.getUsername();
-                return " <" + clientName + "> " + "clientId：" + clientId + " user:" + username + " broker:" + broker;
+        return " <" + clientName + "> " + "clientId：" + clientId + " user:" + username + " broker:" + broker;
     }
 
     private void doSubscribe(String topic, int qos, IMqttMessageListener messageListener) {
@@ -224,10 +225,10 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
         // 触发异步连接，避免阻塞
         connectAsync();
         if (topics.containsKey(topic)) {
-                        logger.warn("MQTT client:{} duplicate subscribed{}", clientName, topic);
+            logger.warn("MQTT client:{} duplicate subscribed{}", clientName, topic);
             return;
         }
-        doSubscribe(topic, qos, messageListener);
+//        doSubscribe(topic, qos, messageListener);
         topics.put(topic, new Topic(topic, qos, messageListener));
     }
 
