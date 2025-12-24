@@ -37,8 +37,8 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
     private Map<String, MqttClientConnection.Topic> topics = new HashMap<>();
 
 
-    public MqttClientConnection(String clinetName, MqttProperties.ClientConfig clientConfig) {
-        this.clientName = clinetName;
+    public MqttClientConnection(String clientName, MqttProperties.ClientConfig clientConfig) {
+        this.clientName = clientName;
         this.clientConfig = clientConfig;
         this.clientId = getClientId(clientName, clientConfig.getClientId());
     }
@@ -122,7 +122,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
         try {
             Thread.sleep(clientConfig.getReConnectDelay() * 1000L);
         } catch (InterruptedException ignore) {
-
+            logger.error("mqtt:{} 重新连接等待被中断", client.getClientId(), ignore);
         }
     }
 
@@ -154,7 +154,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
     public String nodeInfo() {
         String broker = clientConfig.getBroker();
         String username = clientConfig.getUsername();
-        return " <" + clientName + "> " + "clinetId：" + clientId + " user:" + username + " broker:" + broker;
+                return " <" + clientName + "> " + "clientId：" + clientId + " user:" + username + " broker:" + broker;
     }
 
     private void doSubscribe(String topic, int qos, IMqttMessageListener messageListener) {
@@ -175,7 +175,6 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
             }
         } catch (Exception e) {
             logger.error("client:{} topic:{} publish fail", clientName, topic, e);
-            throw new MqttException(e);
         }
     }
 
@@ -188,7 +187,6 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
             }
         } catch (Exception e) {
             logger.error("client:{} topic:{} publish fail", client, topic, e);
-            throw new MqttException(e);
         }
     }
 
@@ -196,7 +194,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
     @Override
     public void subscribe(String topic, int qos, IMqttMessageListener messageListener) {
         if (topics.containsKey(topic)) {
-            logger.warn("MQTT clinet:{} duplicate subscribed{}", clientName, topic);
+                        logger.warn("MQTT client:{} duplicate subscribed{}", clientName, topic);
             return;
         }
         doSubscribe(topic, qos, messageListener);
@@ -208,7 +206,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
         try {
             doPublish(topic, messageDecoderEncoder.convertEncoder(data), qos, retained);
         } catch (MqttException e) {
-            throw new RuntimeException(e);
+            logger.error("client:{} topic:{} publish fail", clientName, topic, e);
         }
     }
 
@@ -217,7 +215,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
         try {
             doPublish(topic, message);
         } catch (MqttException e) {
-            throw new RuntimeException(e);
+            logger.error("client:{} topic:{} publish fail", clientName, topic, e);
         }
     }
 

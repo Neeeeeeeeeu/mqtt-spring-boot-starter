@@ -63,9 +63,8 @@ public class MqttEndpointRegistrar implements InitializingBean {
                             this.mQttAsyncThreadPool.getListenerPool());
                     try {
                         mQttTemplate.subscribe(endpoint.getTopicName(), endpoint.getQos(), bridgeListener);
-                    } catch (MqttException e) {
+                    } catch (Exception e) {
                         logger.error("clientId:{} 订阅失败，请检查YAML文件。 订阅位于:{}", clientId, endpoint.getClazz().getName() + "." + endpoint.getMethod().getName());
-                        throw new RuntimeException(e);
                     }
                 } else {
                     logger.error("clientId:{} 未找到对应MQTT配置，请检查YAML文件。 订阅位于:{}", clientId, endpoint.getClazz().getName() + "." + endpoint.getMethod().getName());

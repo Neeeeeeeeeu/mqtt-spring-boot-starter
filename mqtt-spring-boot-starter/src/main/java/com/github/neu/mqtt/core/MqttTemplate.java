@@ -13,10 +13,10 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public interface MqttTemplate {
 
-    <T> void publish(String topic, T data, int qos, boolean retained) throws MqttException;
+    <T> void publish(String topic, T data, int qos, boolean retained);
 
-    void publish(String topic, MqttMessage message) throws MqttException;
+    void publish(String topic, MqttMessage message);
 
-    void subscribe(String topic, int qos, IMqttMessageListener messageListener) throws MqttException;
+    void subscribe(String topic, int qos, IMqttMessageListener messageListener);
 
 }
