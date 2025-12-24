@@ -11,6 +11,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * mqtt客户端 包含连接参数
@@ -36,6 +39,10 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
 
     private Map<String, MqttClientConnection.Topic> topics = new HashMap<>();
 
+    // 非阻塞连接控制：单线程执行器与原子状态
+    private final ExecutorService connectExecutor = Executors.newSingleThreadExecutor();
+    private final AtomicBoolean isConnecting = new AtomicBoolean(false);
+    private final AtomicBoolean isConnected = new AtomicBoolean(false);
 
     public MqttClientConnection(String clientName, MqttProperties.ClientConfig clientConfig) {
         this.clientName = clientName;
@@ -76,28 +83,47 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
         // 链接超时默认30秒
         connOpts.setConnectionTimeout(clientConfig.getConnectTimeout());
         connOpts.setCleanSession(true);
-        connect();
+        // 非阻塞触发连接
+        connectAsync();
     }
 
-    private synchronized void connect() {
-        while (!client.isConnected()) {
-            try {
-                // 建立连接
-                if (connOpts == null) {
-                    client.connect();
-                } else {
-                    client.connect(connOpts);
-                }
-                logger.info("MQTT服务器连接成功{}", nodeInfo() +" Config:"+clientConfig.toString());
-                break;
-            } catch (MqttException e) {
-                logger.error("MQTT连接失败:{} 尝试重新连接", nodeInfo() +" Config:"+clientConfig.toString(), e);
-                sleep();
-            }
+    // 非阻塞连接入口：快速返回，不阻塞调用线程，避免重复提交
+    private void connectAsync() {
+        if (isConnected.get()) {
+            return;
         }
-        // 设置客户端异常回调
-        client.setCallback(this);
-        doReSubscribe();
+        if (!isConnecting.compareAndSet(false, true)) {
+            return;
+        }
+        connectExecutor.submit(this::connectLoop);
+    }
+
+    // 连接循环在单线程中运行
+    private void connectLoop() {
+        try {
+            while (!client.isConnected()) {
+                try {
+                    // 建立连接
+                    if (connOpts == null) {
+                        client.connect();
+                    } else {
+                        client.connect(connOpts);
+                    }
+                    logger.info("MQTT服务器连接成功{}", nodeInfo() +" Config:"+clientConfig.toString());
+                    isConnected.set(true);
+                    break;
+                } catch (MqttException e) {
+                    logger.error("MQTT连接失败:{} 尝试重新连接", nodeInfo() +" Config:"+clientConfig.toString(), e);
+                    sleep();
+                }
+            }
+            // 设置客户端异常回调
+            client.setCallback(this);
+            doReSubscribe();
+        } finally {
+            // 允许后续触发重连
+            isConnecting.set(false);
+        }
     }
 
     private void doReSubscribe() {
@@ -115,7 +141,8 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
     @Override
     public void connectionLost(Throwable cause) {
         logger.warn("mqtt:{} 断开链接, 尝试重新链接", client.getClientId());
-        connect();
+        isConnected.set(false);
+        connectAsync();
     }
 
     private void sleep() {
@@ -123,6 +150,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
             Thread.sleep(clientConfig.getReConnectDelay() * 1000L);
         } catch (InterruptedException ignore) {
             logger.error("mqtt:{} 重新连接等待被中断", client.getClientId(), ignore);
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -193,6 +221,8 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
 
     @Override
     public void subscribe(String topic, int qos, IMqttMessageListener messageListener) {
+        // 触发异步连接，避免阻塞
+        connectAsync();
         if (topics.containsKey(topic)) {
                         logger.warn("MQTT client:{} duplicate subscribed{}", clientName, topic);
             return;
@@ -203,6 +233,8 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
 
     @Override
     public <T> void publish(String topic, T data, int qos, boolean retained) {
+        // 触发异步连接，避免阻塞
+        connectAsync();
         try {
             doPublish(topic, messageDecoderEncoder.convertEncoder(data), qos, retained);
         } catch (MqttException e) {
@@ -212,6 +244,8 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
 
     @Override
     public void publish(String topic, MqttMessage message) {
+        // 触发异步连接，避免阻塞
+        connectAsync();
         try {
             doPublish(topic, message);
         } catch (MqttException e) {
@@ -220,7 +254,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
     }
 
     private String getClientId(String clientName, String clientId) {
-        if (clientId == null || clientId.length() == 0) {
+        if (clientId == null || clientId.isEmpty()) {
             int length = 16; // 指定生成的16进制字符串长度
             SecureRandom secureRandom = new SecureRandom();
             byte[] randomBytes = new byte[length / 2]; // 每个字节对应两个16进制字符
@@ -230,7 +264,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
             for (byte b : randomBytes) {
                 hexString.append(String.format("%02x", b)); // 将字节转换为两位16进制
             }
-            return clientName + "_" + hexString.toString();
+            return clientName + "_" + hexString;
         } else {
             return clientId;
         }
