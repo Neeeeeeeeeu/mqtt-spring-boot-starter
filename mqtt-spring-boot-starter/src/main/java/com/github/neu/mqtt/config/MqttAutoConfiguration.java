@@ -42,7 +42,7 @@ public class MqttAutoConfiguration {
 
         @Bean
         @ConditionalOnBean(MqttClientContainer.class)
-        public MqttAnnotationBeanPostProcessor mQttAnnotationBeanPostProcessor() {
+        public static MqttAnnotationBeanPostProcessor mQttAnnotationBeanPostProcessor() {
             return new MqttAnnotationBeanPostProcessor();
         }
     }

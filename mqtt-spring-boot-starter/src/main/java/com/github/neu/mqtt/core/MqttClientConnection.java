@@ -8,12 +8,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MqttClientConnection implements MqttCallback, MqttTemplate {
 
     private final Logger logger = LoggerFactory.getLogger(MqttClientConnection.class);
+    private final ScheduledExecutorService heartbeatExecutor = Executors.newSingleThreadScheduledExecutor();
 
     private MemoryPersistence persistence = new MemoryPersistence();
 
@@ -30,7 +31,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
 
     private MqttClient client;
 
-    private String clientName;
+    private String brokerName;
 
     private String clientId;
 
@@ -45,8 +46,8 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
     private final AtomicBoolean isConnecting = new AtomicBoolean(false);
     private final AtomicBoolean isConnected = new AtomicBoolean(false);
 
-    public MqttClientConnection(String clientName, MqttProperties.ClientConfig clientConfig) {
-        this.clientName = clientName;
+    public MqttClientConnection(String brokerName, MqttProperties.ClientConfig clientConfig) {
+        this.brokerName = brokerName;
         this.clientConfig = clientConfig;
         this.clientId = clientConfig.getClientId();
         if (this.clientId == null) {
@@ -124,6 +125,8 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
             // 设置客户端异常回调
             client.setCallback(this);
             doReSubscribe();
+        } catch (Exception e){
+          logger.error("mqtt:{} 连接过程中出现异常", client.getClientId(), e);
         } finally {
             // 允许后续触发重连
             isConnecting.set(false);
@@ -175,8 +178,8 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
         }
     }
 
-    public String getClientName() {
-        return this.clientName;
+    public String getBrokerName() {
+        return this.brokerName;
     }
 
     @Override
@@ -187,7 +190,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
     public String nodeInfo() {
         String broker = clientConfig.getBroker();
         String username = clientConfig.getUsername();
-        return " <" + clientName + "> " + "clientId：" + clientId + " user:" + username + " broker:" + broker;
+        return " <" + brokerName + "> " + "clientId：" + clientId + " user:" + username + " broker:" + broker;
     }
 
     private void doSubscribe(String topic, int qos, IMqttMessageListener messageListener) {
@@ -204,10 +207,10 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
             client.publish(topic, data, qos, retained);
             if (logger.isDebugEnabled()) {
                 String dataStr = new String(data, StandardCharsets.UTF_8);
-                logger.debug("client:{} topic:{} content:{}", clientName, topic, dataStr);
+                logger.debug("client:{} topic:{} content:{}", brokerName, topic, dataStr);
             }
         } catch (Exception e) {
-            logger.error("client:{} topic:{} publish fail", clientName, topic, e);
+            logger.error("client:{} topic:{} publish fail", brokerName, topic, e);
         }
     }
 
@@ -216,7 +219,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
             client.publish(topic, message);
             if (logger.isDebugEnabled()) {
                 String dataStr = new String(message.getPayload(), StandardCharsets.UTF_8);
-                logger.debug("client:{} topic:{} content:{}", clientName, topic, dataStr);
+                logger.debug("client:{} topic:{} content:{}", brokerName, topic, dataStr);
             }
         } catch (Exception e) {
             logger.error("client:{} topic:{} publish fail", client, topic, e);
@@ -229,33 +232,40 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
         // 触发异步连接，避免阻塞
         connectAsync();
         if (topics.containsKey(topic)) {
-            logger.warn("MQTT client:{} duplicate subscribed{}", clientName, topic);
+            logger.warn("MQTT client:{} duplicate subscribed{}", brokerName, topic);
             return;
         }
-//        doSubscribe(topic, qos, messageListener);
         topics.put(topic, new Topic(topic, qos, messageListener));
     }
 
     @Override
     public <T> void publish(String topic, T data, int qos, boolean retained) {
         // 触发异步连接，避免阻塞
-        connectAsync();
         try {
             doPublish(topic, messageDecoderEncoder.convertEncoder(data), qos, retained);
         } catch (MqttException e) {
-            logger.error("client:{} topic:{} publish fail", clientName, topic, e);
+            logger.error("client:{} topic:{} publish fail", brokerName, topic, e);
         }
     }
 
     @Override
     public void publish(String topic, MqttMessage message) {
         // 触发异步连接，避免阻塞
-        connectAsync();
         try {
             doPublish(topic, message);
         } catch (MqttException e) {
-            logger.error("client:{} topic:{} publish fail", clientName, topic, e);
+            logger.error("client:{} topic:{} publish fail", brokerName, topic, e);
         }
+    }
+
+    private void startHeartbeat() {
+        heartbeatExecutor.scheduleAtFixedRate(() -> {
+            if (!client.isConnected() && isConnected.get()) {
+                logger.warn("mqtt:{} 心跳检测到连接断开", clientId);
+                isConnected.set(false);
+                connectAsync();
+            }
+        }, 30, 30, TimeUnit.SECONDS);
     }
 
     record Topic(String topic, int qos, IMqttMessageListener messageListener) {

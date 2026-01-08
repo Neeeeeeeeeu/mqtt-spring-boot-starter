@@ -17,9 +17,12 @@ public @interface MqttListener {
     String topic() default Strings.EMPTY;
 
     /**
-     * yml中配置的节点名称
+     * yml中的自定义客户端时的节点名
+     * xxx:
+     *  node1: <-- 这里的node1
+     * @return
      */
-    String clientId() default Strings.EMPTY;
+    String brokerName() default Strings.EMPTY;
 
     int qos() default 0;
 }

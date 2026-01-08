@@ -58,18 +58,19 @@ public class TestBean {
 //        log.info("client1/topic001: rec count:" + count2.getAndIncrement());
 //    }
 
-    @MqttListener(clientId = "node1", topic = "node1/topic001")
-    public void topicTestCount1(String data) {
+    @MqttListener(brokerName = "node1", topic = "node1/topic001")
+    public void topicTestCount1(String topic,String data) {
         log.info("node1/topic001: " + data);
+        log.info("topic " + topic);
     }
 
-    @MqttListener(clientId = "client1", topic = "bs_cloud_v2/elec_meter/761076982079/data")
+    @MqttListener(brokerName = "client1", topic = "bs_cloud_v2/elec_meter/761076982079/data")
     public void topicTestCount2(MeterDataCacheDTO data) {
         log.info(data.toString());
 
     }
 
-    @MqttListener(clientId = "client1", topic = "client1/topic003")
+    @MqttListener(brokerName = "client1", topic = "client1/topic003")
     public void topicTest4(TestEntry data) {
         log.info("client1/topic002: " + data.getText());
     }
@@ -79,22 +80,13 @@ public class TestBean {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                for (int i = 0; i < 100000; i++) {
+                for (int i = 0; i < 999; i++) {
                     try {
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                        bsMqttTemplate01.publish("node1/topic001", "node1publish1", 0, false);
-                    } catch (MqttException e) {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
+                    bsMqttTemplate01.publish("node1/topic001", "node1publish1", 0, false);
                 }
             }
         }).start();
@@ -105,30 +97,14 @@ public class TestBean {
 
     private void test1() {
         for (int i = 1; i <= 100000; i++) {
-            try {
-                bsMqttTemplate01.publish("node1/topic001", "node1publish1", 0, false);
-            } catch (MqttException e) {
-                throw new RuntimeException(e);
-            }
+            bsMqttTemplate01.publish("node1/topic001", "node1publish1", 0, false);
 //            bsMqttTemplate01.publish("node1/topic001","node1", 0, false);
-            try {
-                bsMqttTemplate02.publish("client1/topic001", "client1publish1", 0, false);
-            } catch (MqttException e) {
-                throw new RuntimeException(e);
-            }
+            bsMqttTemplate02.publish("client1/topic001", "client1publish1", 0, false);
 //            bsMqttTemplate02.publish("client1/topic001","client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1client1publish1", 0, false);
 
             if (i % 100 == 0) {
-                try {
-                    bsMqttTemplate01.publish("node1/topic002", i + "", 0, false);
-                } catch (MqttException e) {
-                    throw new RuntimeException(e);
-                }
-                try {
-                    bsMqttTemplate02.publish("client1/topic002", i + "", 0, false);
-                } catch (MqttException e) {
-                    throw new RuntimeException(e);
-                }
+                bsMqttTemplate01.publish("node1/topic002", i + "", 0, false);
+                bsMqttTemplate02.publish("client1/topic002", i + "", 0, false);
             }
         }
     }

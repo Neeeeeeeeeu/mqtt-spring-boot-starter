@@ -1,23 +1,29 @@
 mqtt:
-  clients: # node1 node2 节点名可以自定义名称
+  brokers:
     client1:
       broker: tcp://192.168.2.201:1883
-      username: mq01
+      username: mqtest01
       password: 123456
       maxInflight: 1000
+      clientId: mqtt-spring-test-node2 # 客户端ID，必须配置，且在同一broker中唯一，表明节点身份
       connectTimeout: 10
       timeTowait: 2
       reConnectDelay: 10
 
     node1:
       broker: tcp://192.168.2.201:1883 # broker地址
-      username: mq01 # 用户名
+      username: mqtest01 # 用户名
       password: 123456 # 密码
       maxInflight: 1000 # 可同时发送的数据量与QoS有关，过低会导致发布问题（QoS不为0时），具体细节需查阅文档。
       clientId: mqtt-spring-test-node1 # 客户端ID，必须配置，且在同一broker中唯一，表明节点身份
       connectTimeout: 10 # 链接超时配置，单位秒 默认30秒
-      timeTowait: 2 # 同步调用超时配置，注意如果为0或者-1将导致不会超时！ 默认1秒，过低也会导致初始链接broker失败
+      timeToWait: 2 # 同步调用超时配置，注意如果为0或者-1将导致不会超时！ 默认1秒，过低也会导致初始链接broker失败
       reConnectDelay: 10 # 重连间隔时间，单位秒 默认10秒
-#logging:
-#  level:
-    #com.github.neu.*: debug
+      #logging:
+      #  level:
+      #com.github.neu.*: debug
+logging:
+  level:
+    com:
+      github:
+        neu.*: debug

@@ -21,7 +21,7 @@ public class InvocableHandlerMethod {
     private final Method method;
 
     private final Class<?> convertType;
-    
+
     public InvocableHandlerMethod(Object bean, Method method,Class<?> convertType) {
         this.bean = bean;
         this.method = method;
@@ -38,5 +38,9 @@ public class InvocableHandlerMethod {
 
     public Class<?> argType() {
         return convertType;
+    }
+
+    public Method getMethod() {
+        return method;
     }
 }

@@ -11,46 +11,39 @@ import java.lang.reflect.Method;
  */
 public class MqttTopicEndpoint {
 
-    private String clientId;
-    
+    private String brokerName;
+
     private String topicName;
-    
+
     private int qos;
-    
+
     private Class clazz;
-    
+
     private Class<?> convertType;
-    
+
     private Object bean;
-    
+
     private Method method;
 
-    public MqttTopicEndpoint(String clientId, String topicName,
-                             int qos, Class clazz, Object bean, 
+    public MqttTopicEndpoint(String brokerName, String topicName,
+                             int qos, Class clazz, Object bean,
                              Method method, Class<?> convertType) {
-        
-        this.clientId = clientId;
-        
+
+        this.brokerName = brokerName;
         this.topicName = topicName;
-        
         this.qos = qos;
-        
         this.clazz = clazz;
-        
         this.bean = bean;
-        
         this.method = method;
-        
         this.convertType = convertType;
-        
     }
 
-    public String getClientId() {
-        return clientId;
+    public String getBrokerName() {
+        return brokerName;
     }
 
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
+    public void setBrokerName(String brokerName) {
+        this.brokerName = brokerName;
     }
 
     public String getTopicName() {

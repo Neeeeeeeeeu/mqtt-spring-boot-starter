@@ -20,7 +20,7 @@ public class MqttProperties {
      * key 不再使用它作为clinetid 仅仅作为注解中指定的mqtt客户端配置文件中的节点的名字
      * value 客户端配置信息
      */
-    private Map<String, ClientConfig> clients;
+    private Map<String, ClientConfig> brokers;
 
     public static class ClientConfig {
         // MQTT服务器 ip:port
@@ -123,12 +123,12 @@ public class MqttProperties {
         }
     }
 
-    public Map<String, ClientConfig> getClients() {
-        return clients;
+    public Map<String, ClientConfig> getBrokers() {
+        return brokers;
     }
 
-    public void setClients(Map<String, ClientConfig> clients) {
-        this.clients = clients;
+    public void setBrokers(Map<String, ClientConfig> brokers) {
+        this.brokers = brokers;
     }
 
 }

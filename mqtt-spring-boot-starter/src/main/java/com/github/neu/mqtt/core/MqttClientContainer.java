@@ -14,28 +14,28 @@ import java.util.Map;
  */
 public class MqttClientContainer {
 
-    private Map<String, MqttClientConnection> mqttClientRs;
+    private Map<String, MqttClientConnection> mqttClientWithName;
 
     public MqttClientContainer() {
     }
 
-    public MqttTemplate getMqttTemplate(String clientId) {
-        return mqttClientRs.get(clientId);
+    public MqttTemplate getMqttTemplate(String brokerName) {
+        return mqttClientWithName.get(brokerName);
     }
 
-    public MqttClientContainer(Map<String, MqttClientConnection> mqttClientRs) {
-        this.mqttClientRs = mqttClientRs;
+    public MqttClientContainer(Map<String, MqttClientConnection> mqttClientWithName) {
+        this.mqttClientWithName = mqttClientWithName;
     }
 
     public void initialize() {
-        this.mqttClientRs.values().stream().forEach(MqttClientConnection::init);
+        this.mqttClientWithName.values().stream().forEach(MqttClientConnection::init);
     }
 
-    public void addClinet(MqttClientConnection r) {
-        MqttClientConnection mQttClientR = mqttClientRs.get(r.getClientName());
+    public void addClinetWithName(MqttClientConnection r) {
+        MqttClientConnection mQttClientR = mqttClientWithName.get(r.getBrokerName());
         if (mQttClientR != null) {
-            throw new IllegalArgumentException("MQTT客户端已存在:" + r.toString());
+            throw new IllegalArgumentException("MQTT客户端Id已存在:" + r.toString());
         }
-        mqttClientRs.put(r.getClientName(), r);
+        mqttClientWithName.put(r.getBrokerName(), r);
     }
 }

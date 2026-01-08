@@ -1,13 +1,11 @@
 package com.github.neu.mqtt.core;
 
 import com.github.neu.mqtt.threadpool.MqttAsyncThreadPool;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ConfigurableApplicationContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,8 +52,8 @@ public class MqttEndpointRegistrar implements InitializingBean {
         synchronized (this.endpoints) {
             containerMap.initialize();
             endpoints.forEach(endpoint -> {
-                String clientId = endpoint.getClientId();
-                MqttTemplate mQttTemplate = containerMap.getMqttTemplate(clientId);
+                String brokerName = endpoint.getBrokerName();
+                MqttTemplate mQttTemplate = containerMap.getMqttTemplate(brokerName);
                 if (mQttTemplate != null) {
                     BridgeListener bridgeListener = new BridgeListener(endpoint.getTopicName(),
                             new InvocableHandlerMethod(endpoint.getBean(), endpoint.getMethod(), endpoint.getConvertType()),
@@ -64,11 +62,11 @@ public class MqttEndpointRegistrar implements InitializingBean {
                     try {
                         mQttTemplate.subscribe(endpoint.getTopicName(), endpoint.getQos(), bridgeListener);
                     } catch (Exception e) {
-                        logger.error("clientId:{} 订阅失败，请检查YAML文件。 订阅位于:{}", clientId, endpoint.getClazz().getName() + "." + endpoint.getMethod().getName());
+                        logger.error("brokerName:{} 订阅失败，请检查YAML文件。 订阅位于:{}", brokerName, endpoint.getClazz().getName() + "." + endpoint.getMethod().getName());
                     }
                 } else {
-                    logger.error("clientId:{} 未找到对应MQTT配置，请检查YAML文件。 订阅位于:{}", clientId, endpoint.getClazz().getName() + "." + endpoint.getMethod().getName());
-                    throw new RuntimeException("clientId:" + clientId + " 未找到对应MQTT配置，请检查YAML文件 订阅位于:" + endpoint.getClazz().getName() + "." + endpoint.getMethod().getName());
+                    logger.error("brokerName:{} 未找到对应MQTT配置，请检查YAML文件。 订阅位于:{}", brokerName, endpoint.getClazz().getName() + "." + endpoint.getMethod().getName());
+                    throw new RuntimeException("brokerName:" + brokerName + " 未找到对应MQTT配置，请检查YAML文件 订阅位于:" + endpoint.getClazz().getName() + "." + endpoint.getMethod().getName());
                 }
             });
         }

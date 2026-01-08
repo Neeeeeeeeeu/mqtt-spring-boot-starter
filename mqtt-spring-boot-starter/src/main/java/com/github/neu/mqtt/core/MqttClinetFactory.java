@@ -44,7 +44,7 @@ public class MqttClinetFactory implements FactoryBean<MqttClientContainer>, Envi
     private MqttClientContainer crateClientContainer(MqttProperties nodeConfig) throws Exception {
         MessageDecoderEncoder messageDecoderEncoder = createMessageDecoderEncoder();
 
-        Map<String, MqttProperties.ClientConfig> nodes = nodeConfig.getClients();
+        Map<String, MqttProperties.ClientConfig> nodes = nodeConfig.getBrokers();
         if (nodes != null) {
             Map<String, MqttClientConnection> mqttClientRs = nodes.entrySet()
                     .stream()
@@ -80,11 +80,11 @@ public class MqttClinetFactory implements FactoryBean<MqttClientContainer>, Envi
         return messageDecoderEncoder;
     }
 
-    private MqttClientConnection createConnection(String clientName, MqttProperties.ClientConfig cfg, MessageDecoderEncoder messageDecoderEncoder) {
+    private MqttClientConnection createConnection(String brokerName, MqttProperties.ClientConfig cfg, MessageDecoderEncoder messageDecoderEncoder) {
         if (this.applicationContext instanceof ConfigurableApplicationContext caf) {
-            MqttClientConnection mqttClientConnection = new MqttClientConnection(clientName, cfg);
+            MqttClientConnection mqttClientConnection = new MqttClientConnection(brokerName, cfg);
             mqttClientConnection.setMessageDecoderEncoder(messageDecoderEncoder);
-            caf.getBeanFactory().registerSingleton(clientName, mqttClientConnection);
+            caf.getBeanFactory().registerSingleton(brokerName, mqttClientConnection);
             return mqttClientConnection;
         }
         return null;
