@@ -24,14 +24,14 @@ public class MqttProperties {
 
     public static class ClientConfig {
         // MQTT服务器 ip:port
-        private String broker;
+        private String broker = null;
         // 客户端id MQTT中不可重复 未指定则根据mqtt当前的配置名字+随机字符串
         // 如果主动配置则直接应用，启动相同实例会出现冲突。
-        private String clientId = "你没配置MQTT客户端ID哦_" + System.currentTimeMillis();
+        private String clientId = null;
         //用户名
-        private String username;
+        private String username = null;
         //密码
-        private String password;
+        private String password = null;
         //可同时发送的数据量 MQTT 并发数量 超了就会抛出异常 看着配 默认配置10
         private int maxInflight = 1000;
         //MQTT连接超时时间 默认30秒

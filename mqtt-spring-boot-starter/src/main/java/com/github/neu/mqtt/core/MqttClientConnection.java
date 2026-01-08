@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,7 +48,10 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
     public MqttClientConnection(String clientName, MqttProperties.ClientConfig clientConfig) {
         this.clientName = clientName;
         this.clientConfig = clientConfig;
-        this.clientId = getClientId(clientName, clientConfig.getClientId());
+        this.clientId = clientConfig.getClientId();
+        if (this.clientId == null) {
+            throw  new IllegalArgumentException("MQTT客户端为空，请在配置中指定clientId，没有客户端ID无法有效追踪和管理节点");
+        }
     }
 
     public void setMessageDecoderEncoder(MessageDecoderEncoder messageDecoderEncoder) {
@@ -251,23 +255,6 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
             doPublish(topic, message);
         } catch (MqttException e) {
             logger.error("client:{} topic:{} publish fail", clientName, topic, e);
-        }
-    }
-
-    private String getClientId(String clientName, String clientId) {
-        if (clientId == null || clientId.isEmpty()) {
-            int length = 16; // 指定生成的16进制字符串长度
-            SecureRandom secureRandom = new SecureRandom();
-            byte[] randomBytes = new byte[length / 2]; // 每个字节对应两个16进制字符
-            secureRandom.nextBytes(randomBytes);
-
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : randomBytes) {
-                hexString.append(String.format("%02x", b)); // 将字节转换为两位16进制
-            }
-            return clientName + "_" + hexString;
-        } else {
-            return clientId;
         }
     }
 
