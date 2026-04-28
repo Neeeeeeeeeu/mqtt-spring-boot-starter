@@ -4,7 +4,6 @@ package com.github.neu.test;
 import com.github.neu.mqtt.core.MqttTemplate;
 import com.github.neu.mqtt.core.annotation.MqttClient;
 import com.github.neu.mqtt.core.annotation.MqttListener;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -14,6 +13,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
