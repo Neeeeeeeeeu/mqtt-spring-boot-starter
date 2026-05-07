@@ -1,25 +1,20 @@
 package com.github.neu.mqtt.config;
 
 import com.github.neu.mqtt.core.*;
+import com.github.neu.mqtt.config.MqttClientConnection;
 import com.github.neu.mqtt.threadpool.MqttAsyncThreadPool;
-import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+
+import java.util.Map;
 
 @AutoConfiguration
 @EnableConfigurationProperties(MqttProperties.class)
 public class MqttAutoConfiguration {
-
-    private final MqttProperties mqttProperties;
-
-    public MqttAutoConfiguration(MqttProperties mqttProperties) {
-        this.mqttProperties = mqttProperties;
-    }
 
     @Configuration
     public class MqttCore {
@@ -31,13 +26,24 @@ public class MqttAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean(JacksonConverter.class)
-        public DefaultJacksonConverter defaultMessageConvert() {
+        public JacksonConverter defaultMessageConvert() {
             return new DefaultJacksonConverter();
         }
 
         @Bean
-        public MqttClinetFactory mQttClinetFactory() {
-            return new MqttClinetFactory(mqttProperties);
+        @ConditionalOnMissingBean(MessageDecoderEncoder.class)
+        public MessageDecoderEncoder messageDecoderEncoder(JacksonConverter jacksonConverter) {
+            return new DefaultMessageDecoderEncoder(jacksonConverter.createObjectMapper());
+        }
+
+        @Bean
+        public static MqttClientRegistrar mqttClientRegistrar() {
+            return new MqttClientRegistrar();
+        }
+
+        @Bean
+        public MqttClientContainer mqttClientContainer(Map<String, MqttClientConnection> connections) {
+            return new MqttClientContainer(connections);
         }
 
         @Bean
@@ -46,5 +52,4 @@ public class MqttAutoConfiguration {
             return new MqttAnnotationBeanPostProcessor();
         }
     }
-
 }

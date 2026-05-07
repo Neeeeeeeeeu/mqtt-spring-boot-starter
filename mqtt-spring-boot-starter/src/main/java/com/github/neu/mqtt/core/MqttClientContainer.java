@@ -1,41 +1,59 @@
 package com.github.neu.mqtt.core;
 
-
 import com.github.neu.mqtt.config.MqttClientConnection;
+import com.github.neu.mqtt.config.MqttProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @author: neeeeeeeeeu
- * @date: Created in 2024/6/28 15:33
- * @description: MQTT 客户端容器持有类
- * @modified By:
- * @version:
+ * MQTT 客户端容器，持有 Spring 管理的连接和运行时动态创建的连接。
  */
 public class MqttClientContainer {
 
-    private Map<String, MqttClientConnection> mqttClientWithName;
+    private final Map<String, MqttClientConnection> managedClients;
+    private final Map<String, MqttClientConnection> dynamicClients = new ConcurrentHashMap<>();
 
-    public MqttClientContainer() {
+    @Autowired
+    private MessageDecoderEncoder messageDecoderEncoder;
+
+    public MqttClientContainer(Map<String, MqttClientConnection> managedClients) {
+        this.managedClients = new HashMap<>(managedClients);
     }
 
     public MqttTemplate getMqttTemplate(String brokerName) {
-        return mqttClientWithName.get(brokerName);
-    }
-
-    public MqttClientContainer(Map<String, MqttClientConnection> mqttClientWithName) {
-        this.mqttClientWithName = mqttClientWithName;
-    }
-
-    public void initialize() {
-        this.mqttClientWithName.values().stream().forEach(MqttClientConnection::init);
-    }
-
-    public void addClinetWithName(MqttClientConnection r) {
-        MqttClientConnection mQttClientR = mqttClientWithName.get(r.getBrokerName());
-        if (mQttClientR != null) {
-            throw new IllegalArgumentException("MQTT客户端Id已存在:" + r.toString());
+        MqttClientConnection conn = managedClients.get(brokerName);
+        if (conn != null) {
+            return conn;
         }
-        mqttClientWithName.put(r.getBrokerName(), r);
+        return dynamicClients.get(brokerName);
+    }
+
+    /**
+     * 动态创建 MQTT 客户端（非 Spring Bean），用于运行时临时 MQTT 操作。
+     * 创建的客户端会存入内部映射，可通过 {@link #getMqttTemplate(String)} 获取。
+     */
+    public MqttClientConnection createClient(String name, MqttProperties.ClientConfig config) {
+        if (managedClients.containsKey(name) || dynamicClients.containsKey(name)) {
+            throw new IllegalArgumentException("MQTT client already exists: " + name);
+        }
+        MqttClientConnection conn = new MqttClientConnection(name, config);
+        conn.setMessageDecoderEncoder(messageDecoderEncoder);
+        conn.init();
+        dynamicClients.put(name, conn);
+        return conn;
+    }
+
+    /**
+     * 移除动态创建的 MQTT 客户端并释放资源。
+     * 不会影响 Spring 管理的客户端。
+     */
+    public void removeClient(String name) {
+        MqttClientConnection removed = dynamicClients.remove(name);
+        if (removed != null) {
+            removed.destroy();
+        }
     }
 }

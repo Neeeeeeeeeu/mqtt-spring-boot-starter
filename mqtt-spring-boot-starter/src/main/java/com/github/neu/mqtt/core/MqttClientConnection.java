@@ -2,14 +2,17 @@ package com.github.neu.mqtt.config;
 
 import com.github.neu.mqtt.core.MessageDecoderEncoder;
 import com.github.neu.mqtt.core.MqttTemplate;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,7 +42,7 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
 
     private MessageDecoderEncoder messageDecoderEncoder;
 
-    private Map<String, MqttClientConnection.Topic> topics = new HashMap<>();
+    private Map<String, Topic> topics = new ConcurrentHashMap<>();
 
     // 非阻塞连接控制：单线程执行器与原子状态
     private final ExecutorService connectExecutor = Executors.newSingleThreadExecutor();
@@ -55,10 +58,12 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
         }
     }
 
+    @Autowired
     public void setMessageDecoderEncoder(MessageDecoderEncoder messageDecoderEncoder) {
         this.messageDecoderEncoder = messageDecoderEncoder;
     }
 
+    @PostConstruct
     public void init() {
         try {
             initMqttClient();
@@ -266,6 +271,22 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
                 connectAsync();
             }
         }, 30, 30, TimeUnit.SECONDS);
+    }
+
+    @PreDestroy
+    public void destroy() {
+        try {
+            if (client != null && client.isConnected()) {
+                client.disconnect();
+            }
+            if (client != null) {
+                client.close();
+            }
+        } catch (MqttException e) {
+            logger.error("MQTT cleanup failed for {}", brokerName, e);
+        }
+        heartbeatExecutor.shutdownNow();
+        connectExecutor.shutdownNow();
     }
 
     record Topic(String topic, int qos, IMqttMessageListener messageListener) {

@@ -50,7 +50,6 @@ public class MqttEndpointRegistrar implements InitializingBean {
 
     private void registerAllEndpoints() {
         synchronized (this.endpoints) {
-            containerMap.initialize();
             endpoints.forEach(endpoint -> {
                 String brokerName = endpoint.getBrokerName();
                 MqttTemplate mQttTemplate = containerMap.getMqttTemplate(brokerName);

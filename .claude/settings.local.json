@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn -f mqtt-spring-boot-starter/pom.xml clean compile)",
+      "Bash(mvn -f mqtt-spring-boot-starter/pom.xml install -DskipTests)",
+      "Bash(mvn -f mqtt-spring-test/pom.xml clean compile)",
+      "Bash(java *)",
+      "Bash(mvn -f mqtt-spring-test/pom.xml clean compile -Dmaven.compiler.forceJavacCompilerUse=true)"
+    ]
+  }
+}
