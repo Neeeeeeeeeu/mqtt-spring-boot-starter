@@ -241,6 +241,9 @@ public class MqttClientConnection implements MqttCallback, MqttTemplate {
             return;
         }
         topics.put(topic, new Topic(topic, qos, messageListener));
+        if (isConnected.get() && client.isConnected()) {
+            doSubscribe(topic, qos, messageListener);
+        }
     }
 
     @Override

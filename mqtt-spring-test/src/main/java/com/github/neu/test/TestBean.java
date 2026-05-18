@@ -6,8 +6,6 @@ import com.github.neu.mqtt.core.annotation.MqttClient;
 import com.github.neu.mqtt.core.annotation.MqttListener;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
@@ -58,7 +56,13 @@ public class TestBean {
 //        log.info("client1/topic001: rec count:" + count2.getAndIncrement());
 //    }
 
-    @MqttListener(brokerName = "node1", topic = "node1/topic001")
+    @MqttListener(brokerName = "node1", topic = "test/topic", qos = 0)
+    public void test(String data){
+        log.warn("Test topic received data: {}", data);
+    }
+
+
+//    @MqttListener(brokerName = "node1", topic = "node1/topic001")
     public void topicTestCount1(String topic,String data) {
         log.info("node1/topic001: " + data);
         log.info("topic " + topic);
@@ -67,7 +71,6 @@ public class TestBean {
     @MqttListener(brokerName = "client1", topic = "bs_cloud_v2/elec_meter/761076982079/data")
     public void topicTestCount2(MeterDataCacheDTO data) {
         log.info(data.toString());
-
     }
 
     @MqttListener(brokerName = "client1", topic = "client1/topic003")
@@ -75,7 +78,7 @@ public class TestBean {
         log.info("client1/topic002: " + data.getText());
     }
 
-    @PostConstruct
+//    @PostConstruct
     public void send() {
         new Thread(new Runnable() {
             @Override
